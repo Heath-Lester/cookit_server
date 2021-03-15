@@ -43,3 +43,9 @@ The Back-End Capstone for https://github.com/Heath-Lester/cookit client.
 
 1. Third-Party Packages
     ```pipenv install django autopep8 pylint djangorestframework django-cors-headers pylint-django```
+
+1. Migrate data
+    ```./seed.sh```
+
+1. Start the Server
+    ```python manage.py runserver```
