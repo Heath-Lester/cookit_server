@@ -1,0 +1,87 @@
+[
+  {
+    "model": "cookit_api.saved_recipe",
+    "pk": 1,
+    "fields": {
+      "user_id": 1,
+      "spoonacular_id": 972774,
+      "title": "Pink Cookie Dragon Fruit Smoothie Bowl",
+      "image": "https://spoonacular.com/recipeImages/972774-556x370.jpg",
+      "source_name": null,
+      "source_url": null,
+      "servings": null,
+      "ready_in_minutes": null,
+      "summary": null,
+      "favorite": false,
+      "edited": false
+    }
+  },
+  {
+    "model": "cookit_api.saved_recipe",
+    "pk": 2,
+    "fields": {
+      "user_id": 1,
+      "spoonacular_id": 547698,
+      "title": "Key Lime Pie",
+      "image": "https://spoonacular.com/recipeImages/547698-556x370.jpg",
+      "source_name": null,
+      "source_url": null,
+      "servings": null,
+      "ready_in_minutes": null,
+      "summary": null,
+      "favorite": false,
+      "edited": false
+    }
+  },
+  {
+    "model": "cookit_api.saved_recipe",
+    "pk": 3,
+    "fields": {
+      "user_id": 1,
+      "spoonacular_id": 595654,
+      "title": "Perfect Pan-Seared Steak",
+      "image": "https://spoonacular.com/recipeImages/595654-556x370.jpg",
+      "source_name": null,
+      "source_url": null,
+      "servings": null,
+      "ready_in_minutes": null,
+      "summary": null,
+      "favorite": false,
+      "edited": false
+    }
+  },
+  {
+    "model": "cookit_api.saved_recipe",
+    "pk": 4,
+    "fields": {
+      "user_id": 1,
+      "spoonacular_id": 1149769,
+      "title": "Eggnog Recipe",
+      "image": "https://spoonacular.com/recipeImages/1149769-556x370.jpg",
+      "source_name": null,
+      "source_url": null,
+      "servings": null,
+      "ready_in_minutes": null,
+      "summary": null,
+      "favorite": false,
+      "edited": false
+    }
+  },
+  {
+    "model": "cookit_api.saved_recipe",
+    "pk": 5,
+    "fields": {
+      "user_id": 1,
+      "spoonacular_id": 1057874,
+      "title": "Baked Ham (with Brown Sugar Glaze)",
+      "image": "https://spoonacular.com/recipeImages/1057874-556x370.jpg",
+      "source_name": null,
+      "source_url": null,
+      "servings": null,
+      "ready_in_minutes": null,
+      "summary": null,
+      "favorite": true,
+      "edited": false
+    }
+  }
+]

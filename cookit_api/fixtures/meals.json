@@ -1,0 +1,74 @@
+[
+    {
+        "model": "cookit_api.meal",
+        "pk": 1,
+        "fields": {
+            "user_id": 1,
+            "spoonacular_id": 1156033,
+            "saved_recipe_id": null
+        }
+    },
+    {
+        "model": "cookit_api.meal",
+        "pk": 2,
+        "fields": {
+            "user_id": 1,
+            "spoonacular_id": 1075271,
+            "saved_recipe_id": null
+        }
+    },
+    {
+        "model": "cookit_api.meal",
+        "pk": 3,
+        "fields": {
+            "user_id": 1,
+            "spoonacular_id": 136995,
+            "saved_recipe_id": null
+        }
+    },
+    {
+        "model": "cookit_api.meal",
+        "pk": 4,
+        "fields": {
+            "user_id": 1,
+            "spoonacular_id": 485365,
+            "saved_recipe_id": null
+        }
+    },
+    {
+        "model": "cookit_api.meal",
+        "pk": 5,
+        "fields": {
+            "user_id": 1,
+            "spoonacular_id": 1417619,
+            "saved_recipe_id": null
+        }
+    },
+    {
+        "model": "cookit_api.meal",
+        "pk": 6,
+        "fields": {
+            "user_id": 1,
+            "spoonacular_id": 58294,
+            "saved_recipe_id": null
+        }
+    },
+    {
+        "model": "cookit_api.meal",
+        "pk": 7,
+        "fields": {
+            "user_id": 2,
+            "spoonacular_id": 511446,
+            "saved_recipe_id": null
+        }
+    },
+    {
+        "model": "cookit_api.meal",
+        "pk": 8,
+        "fields": {
+            "user_id": 2,
+            "spoonacular_id": 821490,
+            "saved_recipe_id": null
+        }
+    }
+]
