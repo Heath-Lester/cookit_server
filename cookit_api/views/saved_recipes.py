@@ -37,7 +37,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientSerializer(many=True)
     instructions = InstructionSerializer(many=True)
     equipment = EquipmentSerializer(many=True)
-    
+
     class Meta:
         model = Saved_Recipe
         fields = ('id','spoonacular_id', 'user', 'title', 'image', 'source_name',
@@ -72,39 +72,48 @@ class Saved_Recipes(ViewSet):
 
         new_ingredients = request.data["ingredients"]
 
+        i=0
+
         for new_ingredient in new_ingredients:
             new_ingredient = Ingredient()
             new_ingredient.spoonacular_id = new_recipe.spoonacular_id
-            new_ingredient.saved_recipe = new_recipe.id
+            new_ingredient.saved_recipe = Saved_Recipe.objects.get(pk=new_recipe.id)
             new_ingredient.user = user
-            new_ingredient.spoon_ingredient_id = request.data["id"]
-            new_ingredient.amount = request.data["amount"]
-            new_ingredient.unit = request.data["unit"]
-            new_ingredient.name = request.data["name"]
-            new_ingredient.aisle = request.data["aisle"]
+            new_ingredient.spoon_ingredient_id = request.data["ingredients"][i]["spoonIngredientId"]
+            new_ingredient.amount = request.data["ingredients"][i]["amount"]
+            new_ingredient.unit = request.data["ingredients"][i]["unit"]
+            new_ingredient.name = request.data["ingredients"][i]["name"]
+            new_ingredient.aisle = request.data["ingredients"][i]["aisle"]
             new_ingredient.aquired = False
             new_ingredient.save()
+            i += 1
 
-        new_instructions = request.data["insructions"]
+        new_instructions = request.data["instructions"]
+
+        i=0
 
         for new_instruction in new_instructions:
             new_instruction = Instruction()
             new_instruction.spoonacular_id = new_recipe.spoonacular_id
-            new_instruction.saved_recipe = new_recipe.id
+            new_instruction.saved_recipe = Saved_Recipe.objects.get(pk=new_recipe.id)
             new_instruction.user = user
-            new_instruction.step_number = request.data["number"]
-            new_instruction.instruction = request.data["step"]
+            new_instruction.step_number = request.data["instructions"][i]["number"]
+            new_instruction.instruction = request.data["instructions"][i]["step"]
             new_instruction.save()
+            i += 1
 
         new_eqiupment = request.data["equipment"]
 
+        i=0
+
         for new_item in new_eqiupment:
-            new_item = Instruction()
+            new_item = Equipment()
             new_item.spoonacular_id = new_recipe.spoonacular_id
-            new_item.saved_recipe = new_recipe.id
+            new_item.saved_recipe = Saved_Recipe.objects.get(pk=new_recipe.id)
             new_item.user = user
-            new_item.name = request.data["name"]
+            new_item.name = request.data["equipment"][i]["name"]
             new_item.save()
+            i += 1
 
 
         serializer = RecipeSerializer(
@@ -112,190 +121,190 @@ class Saved_Recipes(ViewSet):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def retrieve(self, request, pk=None):
-        """
+    # def retrieve(self, request, pk=None):
+    #     """
         
-        """
-        try:
-            product = Product.objects.get(pk=pk)
-            serializer = ProductSerializer(product, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_200_OK)
+    #     """
+    #     try:
+    #         product = Product.objects.get(pk=pk)
+    #         serializer = ProductSerializer(product, context={'request': request})
+    #         return Response(serializer.data, status=status.HTTP_200_OK)
 
-        except Product.DoesNotExist as ex:
-            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+    #     except Product.DoesNotExist as ex:
+    #         return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
-        except Exception as ex:
-            return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     except Exception as ex:
+    #         return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def update(self, request, pk=None):
-        """
+    # def update(self, request, pk=None):
+    #     """
        
-        """
-        product = Product.objects.get(pk=pk)
-        product.name = request.data["name"]
-        product.price = request.data["price"]
-        product.description = request.data["description"]
-        product.quantity = request.data["quantity"]
-        product.created_date = request.data["created_date"]
-        product.location = request.data["location"]
+    #     """
+    #     product = Product.objects.get(pk=pk)
+    #     product.name = request.data["name"]
+    #     product.price = request.data["price"]
+    #     product.description = request.data["description"]
+    #     product.quantity = request.data["quantity"]
+    #     product.created_date = request.data["created_date"]
+    #     product.location = request.data["location"]
 
-        customer = Customer.objects.get(user=request.auth.user)
-        product.customer = customer
+    #     customer = Customer.objects.get(user=request.auth.user)
+    #     product.customer = customer
 
-        product_category = ProductCategory.objects.get(pk=request.data["category_id"])
-        product.category = product_category
-        product.save()
+    #     product_category = ProductCategory.objects.get(pk=request.data["category_id"])
+    #     product.category = product_category
+    #     product.save()
 
-        return Response({}, status=status.HTTP_204_NO_CONTENT)
+    #     return Response({}, status=status.HTTP_204_NO_CONTENT)
 
-    def destroy(self, request, pk=None):
-        """
+    # def destroy(self, request, pk=None):
+    #     """
        
-        """
-        try:
-            product = Product.objects.get(pk=pk)
-            product.delete()
+    #     """
+    #     try:
+    #         product = Product.objects.get(pk=pk)
+    #         product.delete()
 
-            return Response({}, status=status.HTTP_204_NO_CONTENT)
+    #         return Response({}, status=status.HTTP_204_NO_CONTENT)
 
-        except Product.DoesNotExist as ex:
-            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+    #     except Product.DoesNotExist as ex:
+    #         return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
-        except Exception as ex:
-            return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    #     except Exception as ex:
+    #         return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    def list(self, request):
-        """
+    # def list(self, request):
+    #     """
         
-        """
-        products = Product.objects.all()
+    #     """
+    #     products = Product.objects.all()
 
-        # Support filtering by category and/or quantity
-        category = self.request.query_params.get('category', None)
-        quantity = self.request.query_params.get('quantity', None)
-        order = self.request.query_params.get('order_by', None)
-        direction = self.request.query_params.get('direction', None)
-        number_sold = self.request.query_params.get('number_sold', None)
+    #     # Support filtering by category and/or quantity
+    #     category = self.request.query_params.get('category', None)
+    #     quantity = self.request.query_params.get('quantity', None)
+    #     order = self.request.query_params.get('order_by', None)
+    #     direction = self.request.query_params.get('direction', None)
+    #     number_sold = self.request.query_params.get('number_sold', None)
 
-        if order is not None:
-            order_filter = order
+    #     if order is not None:
+    #         order_filter = order
 
-            if direction is not None:
-                if direction == "desc":
-                    order_filter = f'-{order}'
+    #         if direction is not None:
+    #             if direction == "desc":
+    #                 order_filter = f'-{order}'
 
-            products = products.order_by(order_filter)
+    #         products = products.order_by(order_filter)
 
-        if category is not None:
-            products = products.filter(category__id=category)
+    #     if category is not None:
+    #         products = products.filter(category__id=category)
 
-        if quantity is not None:
-            products = products.order_by("-created_date")[:int(quantity)]
+    #     if quantity is not None:
+    #         products = products.order_by("-created_date")[:int(quantity)]
 
-        if number_sold is not None:
-            def sold_filter(product):
-                if product.number_sold <= int(number_sold):
-                    return True
-                return False
+    #     if number_sold is not None:
+    #         def sold_filter(product):
+    #             if product.number_sold <= int(number_sold):
+    #                 return True
+    #             return False
 
-            products = filter(sold_filter, products)
+    #         products = filter(sold_filter, products)
 
-        serializer = ProductSerializer(
-            products, many=True, context={'request': request})
-        return Response(serializer.data)
+    #     serializer = ProductSerializer(
+    #         products, many=True, context={'request': request})
+    #     return Response(serializer.data)
 
-    @action(methods=['post'], detail=True)
-    def recommend(self, request, pk=None):
-        """Recommend products to other users"""
+    # @action(methods=['post'], detail=True)
+    # def recommend(self, request, pk=None):
+    #     """Recommend products to other users"""
 
-        if request.method == "POST":
-            rec = Recommendation()
-            rec.recommender = Customer.objects.get(user=request.auth.user)
-            rec.customer = Customer.objects.get(user__id=request.data["recipient"])
-            rec.product = Product.objects.get(pk=pk)
+    #     if request.method == "POST":
+    #         rec = Recommendation()
+    #         rec.recommender = Customer.objects.get(user=request.auth.user)
+    #         rec.customer = Customer.objects.get(user__id=request.data["recipient"])
+    #         rec.product = Product.objects.get(pk=pk)
 
-            rec.save()
+    #         rec.save()
 
-            return Response(None, status=status.HTTP_204_NO_CONTENT)
+    #         return Response(None, status=status.HTTP_204_NO_CONTENT)
 
-        return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    #     return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(methods=['post', 'delete'], detail=True)
-    def like(self, request, pk=None):
-        """Managing users liking products"""
+    # @action(methods=['post', 'delete'], detail=True)
+    # def like(self, request, pk=None):
+    #     """Managing users liking products"""
 
-        if request.method == "POST":
-            product = Product.objects.get(pk=pk)
+    #     if request.method == "POST":
+    #         product = Product.objects.get(pk=pk)
 
-            customer = Customer.objects.get(user=request.auth.user)
+    #         customer = Customer.objects.get(user=request.auth.user)
 
-            try:
-                like = Like.objects.get(
-                    product=product, customer=customer)
-                return Response(
-                    {'message': 'Customer already liked up this product.'},
-                    status=status.HTTP_422_UNPROCESSABLE_ENTITY
-                )
-            except Like.DoesNotExist:
-                like = Like()
-                like.product = product
-                like.customer = customer
-                like.save()
+    #         try:
+    #             like = Like.objects.get(
+    #                 product=product, customer=customer)
+    #             return Response(
+    #                 {'message': 'Customer already liked up this product.'},
+    #                 status=status.HTTP_422_UNPROCESSABLE_ENTITY
+    #             )
+    #         except Like.DoesNotExist:
+    #             like = Like()
+    #             like.product = product
+    #             like.customer = customer
+    #             like.save()
 
-                return Response({}, status=status.HTTP_201_CREATED)
+    #             return Response({}, status=status.HTTP_201_CREATED)
 
-        elif request.method == "DELETE":
-            try:
-                product = Product.objects.get(pk=pk)
-            except Product.DoesNotExist:
-                return Response(
-                    {'message': 'The product does not exist.'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
+    #     elif request.method == "DELETE":
+    #         try:
+    #             product = Product.objects.get(pk=pk)
+    #         except Product.DoesNotExist:
+    #             return Response(
+    #                 {'message': 'The product does not exist.'},
+    #                 status=status.HTTP_404_NOT_FOUND
+    #             )
 
-            customer = Customer.objects.get(user=request.auth.user)
+    #         customer = Customer.objects.get(user=request.auth.user)
 
-            try:
-                like = Like.objects.get(
-                    product=product, customer=customer)
-                like.delete()
-                return Response(None, status=status.HTTP_204_NO_CONTENT)
+    #         try:
+    #             like = Like.objects.get(
+    #                 product=product, customer=customer)
+    #             like.delete()
+    #             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
-            except Like.DoesNotExist:
-                return Response(
-                    {'message': 'The current user has not liked this product.'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
+    #         except Like.DoesNotExist:
+    #             return Response(
+    #                 {'message': 'The current user has not liked this product.'},
+    #                 status=status.HTTP_404_NOT_FOUND
+    #             )
 
-        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    #     return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(methods=['get'], detail=False)
-    def liked(self, request):
-        """Listing all of a users liked products"""
+    # @action(methods=['get'], detail=False)
+    # def liked(self, request):
+    #     """Listing all of a users liked products"""
 
-        if request.method == "GET":
+    #     if request.method == "GET":
 
-            customer = Customer.objects.get(user=request.auth.user)
+    #         customer = Customer.objects.get(user=request.auth.user)
 
-            liked_products = []
+    #         liked_products = []
 
-            try:
-                likes= Like.objects.filter(
-                    customer=customer
-                )
+    #         try:
+    #             likes= Like.objects.filter(
+    #                 customer=customer
+    #             )
 
-                for like in likes:
+    #             for like in likes:
 
-                    product = Product.objects.get(pk=like.product_id)
-                    liked_products.append(product)
+    #                 product = Product.objects.get(pk=like.product_id)
+    #                 liked_products.append(product)
 
-                serializer = ProductSerializer(liked_products, many=True, context={'request': request})
+    #             serializer = ProductSerializer(liked_products, many=True, context={'request': request})
 
-                return Response(serializer.data, status=status.HTTP_200_OK)
+    #             return Response(serializer.data, status=status.HTTP_200_OK)
 
-            except Like.DoesNotExist:
-                return Response({'message': 'Customer has not liked any products.'}, 
-                    status=status.HTTP_404_NOT_FOUND)
+    #         except Like.DoesNotExist:
+    #             return Response({'message': 'Customer has not liked any products.'}, 
+    #                 status=status.HTTP_404_NOT_FOUND)
 
         
 
