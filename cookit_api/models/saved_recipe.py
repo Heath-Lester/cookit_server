@@ -1,3 +1,4 @@
+"""Module for the Saved Recipe Model"""
 from django.db import models
 from django.contrib.auth.models import User
 

@@ -1,6 +1,7 @@
+"""Module for the Instruction Model"""
 from django.db import models
-from .saved_recipe import Saved_Recipe
 from django.contrib.auth.models import User
+from .saved_recipe import Saved_Recipe
 
 
 class Instruction(models.Model):
