@@ -9,4 +9,5 @@ python3 manage.py loaddata tokens
 python3 manage.py loaddata saved_recipes
 python3 manage.py loaddata ingredients
 python3 manage.py loaddata instructions
+python3 manage.py loaddata equipment
 python3 manage.py loaddata meals

@@ -9,30 +9,41 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.http import HttpResponseServerError
 from django.core.files.base import ContentFile
 from django.contrib.auth.models import User
-from cookit_api.models import Saved_Recipe, Ingredient
+from cookit_api.models import Saved_Recipe, Ingredient, Instruction, Equipment
 
 
-class RecipeSerializer(serializers.ModelSerializer):
-    """JSON serializer for saved Recipes"""
-    class Meta:
-        model = Saved_Recipe
-        fields = ('id','spoonacular_id', 'user', 'title', 'image', 'source_name',
-                  'source_url', 'servings', 'ready_in_minutes', 'summary',
-                  'favorite', 'edited', 'ingredients', 'instructions')
-        depth = 1
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """JSON serializer for saved Recipes"""
+    """JSON serializer for Ingredients"""
     class Meta:
         model = Ingredient
         fields = ('id', 'sooonacular_id', 'saved_recipe', 'user', 'spoon_ingredient_id', 'amount',
                   'unit', 'name', 'aisle', 'aquired')
 
 class InstructionSerializer(serializers.ModelSerializer):
-    """JSON serializer for saved Recipes"""
+    """JSON serializer for Instructions"""
     class Meta:
         model = Ingredient
         fields = ('id', 'sooonacular_id', 'saved_recipe', 'user', 'step_number', 'instruction')
+
+class EquipmentSerializer(serializers.ModelSerializer):
+    """JSON serializer for Equipment"""
+    class Meta:
+        model = Equipment
+        fields = ('id', 'sooonacular_id', 'saved_recipe', 'user', 'name')
+
+class RecipeSerializer(serializers.ModelSerializer):
+    """JSON serializer for Saved Recipes"""
+    ingredients = IngredientSerializer(many=True)
+    instructions = InstructionSerializer(many=True)
+    equipment = EquipmentSerializer(many=True)
+    
+    class Meta:
+        model = Saved_Recipe
+        fields = ('id','spoonacular_id', 'user', 'title', 'image', 'source_name',
+                  'source_url', 'servings', 'ready_in_minutes', 'summary',
+                  'favorite', 'edited', 'ingredients', 'instructions', 'equipment')
+        depth = 1
 
 
 class Saved_Recipes(ViewSet):
@@ -41,60 +52,7 @@ class Saved_Recipes(ViewSet):
 
     def create(self, request):
         """
-        @api {POST} /products POST new product
-        @apiName CreateProduct
-        @apiGroup Product
-
-        @apiHeader {String} Authorization Auth token
-        @apiHeaderExample {String} Authorization
-            Token 9ba45f09651c5b0c404f37a2d2572c026c146611
-
-        @apiParam {String} name Short form name of product
-        @apiParam {Number} price Cost of product
-        @apiParam {String} description Long form description of product
-        @apiParam {Number} quantity Number of items to sell
-        @apiParam {String} location City where product is located
-        @apiParam {Number} category_id Category of product
-        @apiParamExample {json} Input
-            {
-                "name": "Kite",
-                "price": 14.99,
-                "description": "It flies high",
-                "quantity": 60,
-                "location": "Pittsburgh",
-                "category_id": 4
-            }
-
-        @apiSuccess (200) {Object} product Created product
-        @apiSuccess (200) {id} product.id Product Id
-        @apiSuccess (200) {String} product.name Short form name of product
-        @apiSuccess (200) {String} product.description Long form description of product
-        @apiSuccess (200) {Number} product.price Cost of product
-        @apiSuccess (200) {Number} product.quantity Number of items to sell
-        @apiSuccess (200) {Date} product.created_date City where product is located
-        @apiSuccess (200) {String} product.location City where product is located
-        @apiSuccess (200) {String} product.image_path Path to product image
-        @apiSuccess (200) {Number} product.average_rating Average customer rating of product
-        @apiSuccess (200) {Number} product.number_sold How many items have been purchased
-        @apiSuccess (200) {Object} product.category Category of product
-        @apiSuccessExample {json} Success
-            {
-                "id": 101,
-                "url": "http://localhost:8000/products/101",
-                "name": "Kite",
-                "price": 14.99,
-                "number_sold": 0,
-                "description": "It flies high",
-                "quantity": 60,
-                "created_date": "2019-10-23",
-                "location": "Pittsburgh",
-                "image_path": null,
-                "average_rating": 0,
-                "category": {
-                    "url": "http://localhost:8000/productcategories/6",
-                    "name": "Games/Toys"
-                }
-            }
+        Handles POST request for a new recipe.
         """
         user = User.objects.get(pk=request.auth.user.id)
 
@@ -116,63 +74,47 @@ class Saved_Recipes(ViewSet):
 
         for new_ingredient in new_ingredients:
             new_ingredient = Ingredient()
-            new_ingredient.spoonacular_id = request.data["spoonacularId"]
-            new_ingredient.saved_recipe = request.data["spoonacularId"]
+            new_ingredient.spoonacular_id = new_recipe.spoonacular_id
+            new_ingredient.saved_recipe = new_recipe.id
+            new_ingredient.user = user
+            new_ingredient.spoon_ingredient_id = request.data["id"]
+            new_ingredient.amount = request.data["amount"]
+            new_ingredient.unit = request.data["unit"]
+            new_ingredient.name = request.data["name"]
+            new_ingredient.aisle = request.data["aisle"]
+            new_ingredient.aquired = False
+            new_ingredient.save()
+
+        new_instructions = request.data["insructions"]
+
+        for new_instruction in new_instructions:
+            new_instruction = Instruction()
+            new_instruction.spoonacular_id = new_recipe.spoonacular_id
+            new_instruction.saved_recipe = new_recipe.id
+            new_instruction.user = user
+            new_instruction.step_number = request.data["number"]
+            new_instruction.instruction = request.data["step"]
+            new_instruction.save()
+
+        new_eqiupment = request.data["equipment"]
+
+        for new_item in new_eqiupment:
+            new_item = Instruction()
+            new_item.spoonacular_id = new_recipe.spoonacular_id
+            new_item.saved_recipe = new_recipe.id
+            new_item.user = user
+            new_item.name = request.data["name"]
+            new_item.save()
 
 
-        new_recipe.category = product_category
-
-        if "image_path" in request.data:
-            format, imgstr = request.data["image_path"].split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name=f'{new_recipe.id}-{request.data["name"]}.{ext}')
-
-            new_recipe.image_path = data
-
-
-        serializer = ProductSerializer(
+        serializer = RecipeSerializer(
             new_recipe, context={'request': request})
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, pk=None):
         """
-        @api {GET} /products/:id GET product
-        @apiName GetProduct
-        @apiGroup Product
-
-        @apiParam {id} id Product Id
-
-        @apiSuccess (200) {Object} product Created product
-        @apiSuccess (200) {id} product.id Product Id
-        @apiSuccess (200) {String} product.name Short form name of product
-        @apiSuccess (200) {String} product.description Long form description of product
-        @apiSuccess (200) {Number} product.price Cost of product
-        @apiSuccess (200) {Number} product.quantity Number of items to sell
-        @apiSuccess (200) {Date} product.created_date City where product is located
-        @apiSuccess (200) {String} product.location City where product is located
-        @apiSuccess (200) {String} product.image_path Path to product image
-        @apiSuccess (200) {Number} product.average_rating Average customer rating of product
-        @apiSuccess (200) {Number} product.number_sold How many items have been purchased
-        @apiSuccess (200) {Object} product.category Category of product
-        @apiSuccessExample {json} Success
-            {
-                "id": 101,
-                "url": "http://localhost:8000/products/101",
-                "name": "Kite",
-                "price": 14.99,
-                "number_sold": 0,
-                "description": "It flies high",
-                "quantity": 60,
-                "created_date": "2019-10-23",
-                "location": "Pittsburgh",
-                "image_path": null,
-                "average_rating": 0,
-                "category": {
-                    "url": "http://localhost:8000/productcategories/6",
-                    "name": "Games/Toys"
-                }
-            }
+        
         """
         try:
             product = Product.objects.get(pk=pk)
@@ -187,17 +129,7 @@ class Saved_Recipes(ViewSet):
 
     def update(self, request, pk=None):
         """
-        @api {PUT} /products/:id PUT changes to product
-        @apiName UpdateProduct
-        @apiGroup Product
-
-        @apiHeader {String} Authorization Auth token
-        @apiHeaderExample {String} Authorization
-            Token 9ba45f09651c5b0c404f37a2d2572c026c146611
-
-        @apiParam {id} id Product Id to update
-        @apiSuccessExample {json} Success
-            HTTP/1.1 204 No Content
+       
         """
         product = Product.objects.get(pk=pk)
         product.name = request.data["name"]
@@ -218,17 +150,7 @@ class Saved_Recipes(ViewSet):
 
     def destroy(self, request, pk=None):
         """
-        @api {DELETE} /products/:id DELETE product
-        @apiName DeleteProduct
-        @apiGroup Product
-
-        @apiHeader {String} Authorization Auth token
-        @apiHeaderExample {String} Authorization
-            Token 9ba45f09651c5b0c404f37a2d2572c026c146611
-
-        @apiParam {id} id Product Id to delete
-        @apiSuccessExample {json} Success
-            HTTP/1.1 204 No Content
+       
         """
         try:
             product = Product.objects.get(pk=pk)
@@ -244,31 +166,7 @@ class Saved_Recipes(ViewSet):
 
     def list(self, request):
         """
-        @api {GET} /products GET all products
-        @apiName ListProducts
-        @apiGroup Product
-
-        @apiSuccess (200) {Object[]} products Array of products
-        @apiSuccessExample {json} Success
-            [
-                {
-                    "id": 101,
-                    "url": "http://localhost:8000/products/101",
-                    "name": "Kite",
-                    "price": 14.99,
-                    "number_sold": 0,
-                    "description": "It flies high",
-                    "quantity": 60,
-                    "created_date": "2019-10-23",
-                    "location": "Pittsburgh",
-                    "image_path": null,
-                    "average_rating": 0,
-                    "category": {
-                        "url": "http://localhost:8000/productcategories/6",
-                        "name": "Games/Toys"
-                    }
-                }
-            ]
+        
         """
         products = Product.objects.all()
 

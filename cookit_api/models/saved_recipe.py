@@ -26,12 +26,12 @@ class Saved_Recipe(models.Model):
         self.__ingredients = value
 
     @property
-    def cook_ware(self):
-        return self.__cook_ware
+    def equipment(self):
+        return self.__equipment
 
-    @cook_ware.setter
-    def cook_ware(self, value):
-        self.__cook_ware = value
+    @equipment.setter
+    def equipment(self, value):
+        self.__equipment = value
 
     @property
     def intructions(self):
