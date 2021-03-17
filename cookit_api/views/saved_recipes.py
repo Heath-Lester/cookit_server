@@ -184,139 +184,87 @@ class Saved_Recipes(ViewSet):
     #     except Exception as ex:
     #         return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # def list(self, request):
-    #     """
+    def list(self, request):
+        """
+        Handles GET requests for all recipes.
         
-    #     """
-    #     products = Product.objects.all()
+        """
+        user = User.objects.get(pk=request.auth.user.id)
 
-    #     # Support filtering by category and/or quantity
-    #     category = self.request.query_params.get('category', None)
-    #     quantity = self.request.query_params.get('quantity', None)
-    #     order = self.request.query_params.get('order_by', None)
-    #     direction = self.request.query_params.get('direction', None)
-    #     number_sold = self.request.query_params.get('number_sold', None)
+        user_recipes = Saved_Recipe.objects.filter(user=user)
 
-    #     if order is not None:
-    #         order_filter = order
+        for recipe in user_recipes:
 
-    #         if direction is not None:
-    #             if direction == "desc":
-    #                 order_filter = f'-{order}'
+            recipe.ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
+            recipe.instructions = Instruction.objects.filter(saved_recipe=recipe.id)
+            recipe.equipment = Equipment.objects.filter(saved_recipe=recipe.id)
 
-    #         products = products.order_by(order_filter)
+        serializer = RecipeSerializer(
+            user_recipes, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    #     if category is not None:
-    #         products = products.filter(category__id=category)
+    @action(methods=['get'], detail=False)
+    def favorites(self, request):
+        """Handles GET requests for Favorite recipes"""
 
-    #     if quantity is not None:
-    #         products = products.order_by("-created_date")[:int(quantity)]
+        if request.method == "GET":
 
-    #     if number_sold is not None:
-    #         def sold_filter(product):
-    #             if product.number_sold <= int(number_sold):
-    #                 return True
-    #             return False
+            user = User.objects.get(pk=request.auth.user.id)
 
-    #         products = filter(sold_filter, products)
+            user_recipes = Saved_Recipe.objects.filter(user=user)
 
-    #     serializer = ProductSerializer(
-    #         products, many=True, context={'request': request})
-    #     return Response(serializer.data)
+            try:
+                favorite_recipes = user_recipes.filter(favorite=True)
 
-    # @action(methods=['post'], detail=True)
-    # def recommend(self, request, pk=None):
-    #     """Recommend products to other users"""
+                for recipe in favorite_recipes:
 
-    #     if request.method == "POST":
-    #         rec = Recommendation()
-    #         rec.recommender = Customer.objects.get(user=request.auth.user)
-    #         rec.customer = Customer.objects.get(user__id=request.data["recipient"])
-    #         rec.product = Product.objects.get(pk=pk)
+                    recipe.ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
+                    recipe.instructions = Instruction.objects.filter(saved_recipe=recipe.id)
+                    recipe.equipment = Equipment.objects.filter(saved_recipe=recipe.id)
 
-    #         rec.save()
+                serializer = RecipeSerializer(
+                    favorite_recipes, many=True, context={'request': request})
 
-    #         return Response(None, status=status.HTTP_204_NO_CONTENT)
+                return Response(serializer.data, status=status.HTTP_200_OK)
 
-    #     return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            except user_recipes.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
-    # @action(methods=['post', 'delete'], detail=True)
-    # def like(self, request, pk=None):
-    #     """Managing users liking products"""
+            except Exception as ex:
+                return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    #     if request.method == "POST":
-    #         product = Product.objects.get(pk=pk)
+    @action(methods=['patch'], detail=False)
+    def favorite(self, request, pk=None):
+        """Handles PATCH requests to Favorite recipes"""
 
-    #         customer = Customer.objects.get(user=request.auth.user)
+        if request.method == "PATCH":
 
-    #         try:
-    #             like = Like.objects.get(
-    #                 product=product, customer=customer)
-    #             return Response(
-    #                 {'message': 'Customer already liked up this product.'},
-    #                 status=status.HTTP_422_UNPROCESSABLE_ENTITY
-    #             )
-    #         except Like.DoesNotExist:
-    #             like = Like()
-    #             like.product = product
-    #             like.customer = customer
-    #             like.save()
+            try:
 
-    #             return Response({}, status=status.HTTP_201_CREATED)
+                recipe = Saved_Recipe.objects.get(pk=pk)
 
-    #     elif request.method == "DELETE":
-    #         try:
-    #             product = Product.objects.get(pk=pk)
-    #         except Product.DoesNotExist:
-    #             return Response(
-    #                 {'message': 'The product does not exist.'},
-    #                 status=status.HTTP_404_NOT_FOUND
-    #             )
+                if recipe.favorite is False:
 
-    #         customer = Customer.objects.get(user=request.auth.user)
+                    recipe.favorite = True
 
-    #         try:
-    #             like = Like.objects.get(
-    #                 product=product, customer=customer)
-    #             like.delete()
-    #             return Response(None, status=status.HTTP_204_NO_CONTENT)
+                elif recipe.favorite is True:
 
-    #         except Like.DoesNotExist:
-    #             return Response(
-    #                 {'message': 'The current user has not liked this product.'},
-    #                 status=status.HTTP_404_NOT_FOUND
-    #             )
+                    recipe.favorite = False
 
-    #     return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+                recipe.ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
+                recipe.instructions = Instruction.objects.filter(saved_recipe=recipe.id)
+                recipe.equipment = Equipment.objects.filter(saved_recipe=recipe.id)
 
-    # @action(methods=['get'], detail=False)
-    # def liked(self, request):
-    #     """Listing all of a users liked products"""
+                serializer = RecipeSerializer(
+                    recipe, many=False, context={'request': request})
 
-    #     if request.method == "GET":
+                return Response(serializer.data, status=status.HTTP_200_OK)
 
-    #         customer = Customer.objects.get(user=request.auth.user)
+            except Saved_Recipe.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
-    #         liked_products = []
-
-    #         try:
-    #             likes= Like.objects.filter(
-    #                 customer=customer
-    #             )
-
-    #             for like in likes:
-
-    #                 product = Product.objects.get(pk=like.product_id)
-    #                 liked_products.append(product)
-
-    #             serializer = ProductSerializer(liked_products, many=True, context={'request': request})
-
-    #             return Response(serializer.data, status=status.HTTP_200_OK)
-
-    #         except Like.DoesNotExist:
-    #             return Response({'message': 'Customer has not liked any products.'}, 
-    #                 status=status.HTTP_404_NOT_FOUND)
-
+            except Exception as ex:
+                return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
