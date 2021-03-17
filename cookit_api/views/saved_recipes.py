@@ -17,20 +17,20 @@ class IngredientSerializer(serializers.ModelSerializer):
     """JSON serializer for Ingredients"""
     class Meta:
         model = Ingredient
-        fields = ('id', 'spoonacular_id', 'saved_recipe', 'user', 'spoon_ingredient_id', 'amount',
+        fields = ('id', 'spoonacular_id', 'saved_recipe', 'spoon_ingredient_id', 'amount',
                   'unit', 'name', 'aisle', 'aquired')
 
 class InstructionSerializer(serializers.ModelSerializer):
     """JSON serializer for Instructions"""
     class Meta:
         model = Instruction
-        fields = ('id', 'spoonacular_id', 'saved_recipe', 'user', 'step_number', 'instruction')
+        fields = ('id', 'spoonacular_id', 'saved_recipe', 'step_number', 'instruction')
 
 class EquipmentSerializer(serializers.ModelSerializer):
     """JSON serializer for Equipment"""
     class Meta:
         model = Equipment
-        fields = ('id', 'spoonacular_id', 'saved_recipe', 'user', 'name')
+        fields = ('id', 'spoonacular_id', 'saved_recipe', 'name')
 
 class RecipeSerializer(serializers.ModelSerializer):
     """JSON serializer for Saved Recipes"""
@@ -40,7 +40,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Saved_Recipe
-        fields = ('id','spoonacular_id', 'user', 'title', 'image', 'source_name',
+        fields = ('id','spoonacular_id', 'title', 'image', 'source_name',
                   'source_url', 'servings', 'ready_in_minutes', 'summary',
                   'favorite', 'edited', 'ingredients', 'instructions', 'equipment')
         depth = 1
@@ -126,20 +126,26 @@ class Saved_Recipes(ViewSet):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    # def retrieve(self, request, pk=None):
-    #     """
-        
-    #     """
-    #     try:
-    #         product = Product.objects.get(pk=pk)
-    #         serializer = ProductSerializer(product, context={'request': request})
-    #         return Response(serializer.data, status=status.HTTP_200_OK)
+    def retrieve(self, request, pk=None):
+        """
+        Handles GET requests for a single recipe
+        """
+        try:
+            recipe = Saved_Recipe.objects.get(pk=pk)
 
-    #     except Product.DoesNotExist as ex:
-    #         return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+            recipe.ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
+            recipe.instructions = Instruction.objects.filter(saved_recipe=recipe.id)
+            recipe.equipment = Equipment.objects.filter(saved_recipe=recipe.id)
 
-    #     except Exception as ex:
-    #         return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            serializer = RecipeSerializer(recipe, context={'request': request})
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Saved_Recipe.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as ex:
+            return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # def update(self, request, pk=None):
     #     """
