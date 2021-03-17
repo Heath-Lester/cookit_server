@@ -17,20 +17,20 @@ class IngredientSerializer(serializers.ModelSerializer):
     """JSON serializer for Ingredients"""
     class Meta:
         model = Ingredient
-        fields = ('id', 'sooonacular_id', 'saved_recipe', 'user', 'spoon_ingredient_id', 'amount',
+        fields = ('id', 'spoonacular_id', 'saved_recipe', 'user', 'spoon_ingredient_id', 'amount',
                   'unit', 'name', 'aisle', 'aquired')
 
 class InstructionSerializer(serializers.ModelSerializer):
     """JSON serializer for Instructions"""
     class Meta:
-        model = Ingredient
-        fields = ('id', 'sooonacular_id', 'saved_recipe', 'user', 'step_number', 'instruction')
+        model = Instruction
+        fields = ('id', 'spoonacular_id', 'saved_recipe', 'user', 'step_number', 'instruction')
 
 class EquipmentSerializer(serializers.ModelSerializer):
     """JSON serializer for Equipment"""
     class Meta:
         model = Equipment
-        fields = ('id', 'sooonacular_id', 'saved_recipe', 'user', 'name')
+        fields = ('id', 'spoonacular_id', 'saved_recipe', 'user', 'name')
 
 class RecipeSerializer(serializers.ModelSerializer):
     """JSON serializer for Saved Recipes"""
@@ -88,6 +88,7 @@ class Saved_Recipes(ViewSet):
             new_ingredient.save()
             i += 1
 
+
         new_instructions = request.data["instructions"]
 
         i=0
@@ -102,6 +103,7 @@ class Saved_Recipes(ViewSet):
             new_instruction.save()
             i += 1
 
+
         new_eqiupment = request.data["equipment"]
 
         i=0
@@ -115,6 +117,9 @@ class Saved_Recipes(ViewSet):
             new_item.save()
             i += 1
 
+        new_recipe.ingredients = Ingredient.objects.filter(saved_recipe=new_recipe.id)
+        new_recipe.instructions = Instruction.objects.filter(saved_recipe=new_recipe.id)
+        new_recipe.equipment = Equipment.objects.filter(saved_recipe=new_recipe.id)
 
         serializer = RecipeSerializer(
             new_recipe, context={'request': request})
