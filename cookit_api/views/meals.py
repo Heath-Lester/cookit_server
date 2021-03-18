@@ -36,28 +36,25 @@ class MealSerializer(serializers.ModelSerializer):
         model = Meal
         fields = ('id', 'spoonacular_id', 'saved_recipe')
 
-class NonSavedMealSerializer(serializers.ModelSerializer):
-    """JSON serializer for a meal to prepare"""
-    ingredients = IngredientSerializer(many=True)
-    instructions = InstructionSerializer(many=True)
-    equipment = EquipmentSerializer(many=True)
-    class Meta:
-        model = Meal
-        fields = ('id', 'spoonacular_id', 'saved_recipe', 'ingredients', 'instructions', 'equipment')
-    depth = 1
 
-class RecipeSerializer(serializers.ModelSerializer):
+class ConciseRecipeSerializer(serializers.ModelSerializer):
     """JSON serializer for Saved Recipes"""
-    ingredients = IngredientSerializer(many=True)
-    instructions = InstructionSerializer(many=True)
-    equipment = EquipmentSerializer(many=True)
-
     class Meta:
         model = Saved_Recipe
         fields = ('id','spoonacular_id', 'title', 'image', 'source_name',
                   'source_url', 'servings', 'ready_in_minutes', 'summary',
-                  'favorite', 'edited', 'ingredients', 'instructions', 'equipment')
-        depth = 1
+                  'favorite', 'edited')
+
+class DetailedMealSerializer(serializers.ModelSerializer):
+    """JSON serializer for a meal to prepare"""
+    ingredients = IngredientSerializer(many=True)
+    instructions = InstructionSerializer(many=True)
+    equipment = EquipmentSerializer(many=True)
+    saved_recipe = ConciseRecipeSerializer(many=False)
+    class Meta:
+        model = Meal
+        fields = ('id', 'spoonacular_id', 'saved_recipe', 'ingredients', 'instructions', 'equipment')
+    depth = 1
 
 
 class Meals(ViewSet):
@@ -135,7 +132,7 @@ class Meals(ViewSet):
             non_saved_recipe.instructions = Instruction.objects.filter(spoonacular_id=non_saved_recipe.spoonacular_id)
             non_saved_recipe.equipment = Equipment.objects.filter(spoonacular_id=non_saved_recipe.spoonacular_id)
 
-            serializer = NonSavedMealSerializer(
+            serializer = DetailedMealSerializer(
                 non_saved_recipe, context={'request': request})
 
         elif spoonacular_id is not None and saved_recipe_id is not None:
@@ -156,8 +153,10 @@ class Meals(ViewSet):
         Handles DELETE requests for all meals.
        
         """
+        user = User.objects.get(pk=request.auth.user.id)
+
         try:
-            meal = Meal.objects.get(pk=pk)
+            meal = Meal.objects.get(pk=pk, user=user)
 
             if meal.saved_recipe is None:
 
@@ -181,49 +180,68 @@ class Meals(ViewSet):
                 meal.delete()
 
                 return Response({}, status=status.HTTP_204_NO_CONTENT)
-                
+
         except Meal.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # def retrieve(self, request, pk=None):
-    #     """
-    #     Handles GET requests for a single recipe
-    #     """
-    #     try:
-    #         recipe = Saved_Recipe.objects.get(pk=pk)
 
-    #         recipe.ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
-    #         recipe.instructions = Instruction.objects.filter(saved_recipe=recipe.id)
-    #         recipe.equipment = Equipment.objects.filter(saved_recipe=recipe.id)
-
-    #         serializer = RecipeSerializer(recipe, context={'request': request})
-
-    #         return Response(serializer.data, status=status.HTTP_200_OK)
-
-    #     except Saved_Recipe.DoesNotExist as ex:
-    #         return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
-
-    #     except Exception as ex:
-    #         return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    # def list(self, request):
-    #     """
-    #     Handles GET requests for all saved recipes.
+    def list(self, request):
+        """
+        Handles GET requests for all of a users meals.
         
-    #     """
-    #     user = User.objects.get(pk=request.auth.user.id)
+        """
 
-    #     user_recipes = Saved_Recipe.objects.filter(user=user)
+        meals = Meal.objects.filter(user=request.auth.user)
 
-    #     for recipe in user_recipes:
+        for meal in meals:
 
-    #         recipe.ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
-    #         recipe.instructions = Instruction.objects.filter(saved_recipe=recipe.id)
-    #         recipe.equipment = Equipment.objects.filter(saved_recipe=recipe.id)
+            if meal.saved_recipe is None:
 
-    #     serializer = RecipeSerializer(
-    #         user_recipes, many=True, context={'request': request})
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
+                meal.ingredients = Ingredient.objects.filter(spoonacular_id=meal.spoonacular_id)
+                meal.instructions = Instruction.objects.filter(spoonacular_id=meal.spoonacular_id)
+                meal.equipment = Equipment.objects.filter(spoonacular_id=meal.spoonacular_id)
+
+            if meal.saved_recipe is not None:
+
+                meal.ingredients = Ingredient.objects.filter(saved_recipe=meal.saved_recipe)
+                meal.instructions = Instruction.objects.filter(saved_recipe=meal.saved_recipe)
+                meal.equipment = Equipment.objects.filter(saved_recipe=meal.saved_recipe)
+
+        serializer = DetailedMealSerializer(
+            meals, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    @action(methods=['get'], detail=True)
+    def aquired(self, request, pk=None):
+        """Handles GET requests to favorite or unfavorite a recipe"""
+
+        if request.method == "GET":
+
+            try:
+
+                recipe = Saved_Recipe.objects.get(pk=pk)
+
+                if recipe.favorite is False:
+                    recipe.favorite = True
+                    recipe.save(force_update=True)
+
+                    return Response({'message': 'Recipe has been favorited!'}, status=status.HTTP_204_NO_CONTENT)
+
+                elif recipe.favorite is True:
+                    recipe.favorite = False
+                    recipe.save(force_update=True)
+
+                    return Response({'message': 'Recipe has been unfavorited.'}, status=status.HTTP_204_NO_CONTENT)
+
+            except Saved_Recipe.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+            except Exception as ex:
+                return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
