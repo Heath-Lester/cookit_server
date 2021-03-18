@@ -210,9 +210,34 @@ class Meals(ViewSet):
                 meal.instructions = Instruction.objects.filter(saved_recipe=meal.saved_recipe)
                 meal.equipment = Equipment.objects.filter(saved_recipe=meal.saved_recipe)
 
-            serializer = DetailedMealSerializer(
-                meals, many=True, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = DetailedMealSerializer(
+            meals, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
        
+    @action(methods=['delete'], detail=False)
+    def complete(self, request):
+        """Handles DELETE requests to reset meal-to-prep queue."""
+
+        if request.method == "DELETE":
+
+            all_user_meals = Meal.objects.filter(user=request.auth.user)
+
+            for meal in all_user_meals:
+
+                if meal.saved_recipe is None:
+                    ingredients = Ingredient.objects.filter(spoonacular_id=meal.spoonacular_id)
+                    instructions = Instruction.objects.filter(spoonacular_id=meal.spoonacular_id)
+                    equipment = Equipment.objects.filter(spoonacular_id=meal.spoonacular_id)
+
+                    for ingredient in ingredients:
+                        ingredient.delete()
+                    for instruction in instructions:
+                        instruction.delete()
+                    for item in equipment:
+                        item.delete()
+
+                meal.delete()
+
+            return Response({'message': 'Meal list has been reset!'}, status=status.HTTP_204_NO_CONTENT)
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

@@ -25,6 +25,7 @@ from cookit_api.views import *
 router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'recipes', Saved_Recipes, 'saved_recipe')
 router.register(r'meals', Meals, 'meals')
+router.register(r'grocerylist', Grocery_List, 'grocery_list')
 
 urlpatterns = [
     url(r'^', include(router.urls)),
