@@ -126,47 +126,89 @@ class Saved_Recipes(ViewSet):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def retrieve(self, request, pk=None):
+
+    def update(self, request, pk=None):
         """
-        Handles GET requests for a single recipe
-        """
-        try:
-            recipe = Saved_Recipe.objects.get(pk=pk)
-
-            recipe.ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
-            recipe.instructions = Instruction.objects.filter(saved_recipe=recipe.id)
-            recipe.equipment = Equipment.objects.filter(saved_recipe=recipe.id)
-
-            serializer = RecipeSerializer(recipe, context={'request': request})
-
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        except Saved_Recipe.DoesNotExist as ex:
-            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
-
-        except Exception as ex:
-            return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    # def update(self, request, pk=None):
-    #     """
+        Handles PUT requests for all saved recipes.
        
-    #     """
-    #     product = Product.objects.get(pk=pk)
-    #     product.name = request.data["name"]
-    #     product.price = request.data["price"]
-    #     product.description = request.data["description"]
-    #     product.quantity = request.data["quantity"]
-    #     product.created_date = request.data["created_date"]
-    #     product.location = request.data["location"]
+        """
+        user = User.objects.get(pk=request.auth.user.id)
 
-    #     customer = Customer.objects.get(user=request.auth.user)
-    #     product.customer = customer
+        recipe = Saved_Recipe.objects.get(pk=pk)
 
-    #     product_category = ProductCategory.objects.get(pk=request.data["category_id"])
-    #     product.category = product_category
-    #     product.save()
+        old_ingredients = Ingredient.objects.filter(saved_recipe=pk)
+        old_instructions = Instruction.objects.filter(saved_recipe=pk)
+        old_equipment = Equipment.objects.filter(saved_recipe=pk)
 
-    #     return Response({}, status=status.HTTP_204_NO_CONTENT)
+        for ingredient in old_ingredients:
+            ingredient.delete()
+        for instruction in old_instructions:
+            instruction.delete()
+        for equipment in old_equipment:
+            equipment.delete()
+
+        recipe.spoonacular_id = request.data["spoonacularId"]
+        recipe.user = user
+        recipe.title = request.data["title"]
+        recipe.image = request.data["image"]
+        recipe.source_name = request.data["sourceName"]
+        recipe.source_url = request.data["sourceUrl"]
+        recipe.servings = request.data["servings"]
+        recipe.ready_in_minutes = request.data["readyInMinutes"]
+        recipe.summary = request.data["summary"]
+        recipe.favorite = request.data["favorite"]
+        recipe.edited = True
+        recipe.save()
+
+        new_ingredients = request.data["ingredients"]
+
+        i=0
+
+        for ingredient in new_ingredients:
+            ingredient = Ingredient()
+            ingredient.spoonacular_id = recipe.spoonacular_id
+            ingredient.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
+            ingredient.user = user
+            ingredient.spoon_ingredient_id = request.data["ingredients"][i]["spoonIngredientId"]
+            ingredient.amount = request.data["ingredients"][i]["amount"]
+            ingredient.unit = request.data["ingredients"][i]["unit"]
+            ingredient.name = request.data["ingredients"][i]["name"]
+            ingredient.aisle = request.data["ingredients"][i]["aisle"]
+            ingredient.aquired = False
+            ingredient.save()
+            i += 1
+
+
+        new_instructions = request.data["instructions"]
+
+        i=0
+
+        for instruction in new_instructions:
+            instruction = Instruction()
+            instruction.spoonacular_id = recipe.spoonacular_id
+            instruction.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
+            instruction.user = user
+            instruction.step_number = request.data["instructions"][i]["number"]
+            instruction.instruction = request.data["instructions"][i]["step"]
+            instruction.save()
+            i += 1
+
+
+        new_eqiupment = request.data["equipment"]
+
+        i=0
+
+        for item in new_eqiupment:
+            item = Equipment()
+            item.spoonacular_id = recipe.spoonacular_id
+            item.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
+            item.user = user
+            item.name = request.data["equipment"][i]["name"]
+            item.save()
+            i += 1
+
+
+        return Response({}, status=status.HTTP_204_NO_CONTENT)
 
     def destroy(self, request, pk=None):
         """
@@ -195,6 +237,27 @@ class Saved_Recipes(ViewSet):
 
         except Exception as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def retrieve(self, request, pk=None):
+        """
+        Handles GET requests for a single recipe
+        """
+        try:
+            recipe = Saved_Recipe.objects.get(pk=pk)
+
+            recipe.ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
+            recipe.instructions = Instruction.objects.filter(saved_recipe=recipe.id)
+            recipe.equipment = Equipment.objects.filter(saved_recipe=recipe.id)
+
+            serializer = RecipeSerializer(recipe, context={'request': request})
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Saved_Recipe.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as ex:
+            return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def list(self, request):
         """
