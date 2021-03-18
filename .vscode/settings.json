@@ -6,5 +6,6 @@
             "name": "cookit_db",
             "database": "db.sqlite3"
         }
-    ]
+    ],
+    "python.pythonPath": "/home/heath/.local/share/virtualenvs/cookit_server-sANno-3L/bin/python"
 }

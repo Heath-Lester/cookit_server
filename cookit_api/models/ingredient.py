@@ -1,6 +1,7 @@
+"""Module for the Ingredient Model"""
 from django.db import models
-from .saved_recipe import Saved_Recipe
 from django.contrib.auth.models import User
+from .saved_recipe import Saved_Recipe
 
 
 class Ingredient(models.Model):
@@ -12,6 +13,7 @@ class Ingredient(models.Model):
     amount = models.IntegerField()
     unit = models.CharField(max_length=100, null=True)
     name = models.CharField(max_length=100, null=True)
+    aisle = models.CharField(max_length=100, null=True)
     aquired = models.BooleanField()
 
     class Meta:
