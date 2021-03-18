@@ -168,25 +168,37 @@ class Saved_Recipes(ViewSet):
 
     #     return Response({}, status=status.HTTP_204_NO_CONTENT)
 
-    # def destroy(self, request, pk=None):
-    #     """
+    def destroy(self, request, pk=None):
+        """
+        Handles DELETE requests for all saved recipes.
        
-    #     """
-    #     try:
-    #         product = Product.objects.get(pk=pk)
-    #         product.delete()
+        """
+        try:
+            recipe = Saved_Recipe.objects.get(pk=pk)
+            ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
+            instructions = Instruction.objects.filter(saved_recipe=recipe.id)
+            equipment = Equipment.objects.filter(saved_recipe=recipe.id)
 
-    #         return Response({}, status=status.HTTP_204_NO_CONTENT)
+            for ingredient in ingredients:
+                ingredient.delete()
+            for instruction in instructions:
+                instruction.delete()
+            for item in equipment:
+                item.delete()
 
-    #     except Product.DoesNotExist as ex:
-    #         return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+            recipe.delete()
 
-    #     except Exception as ex:
-    #         return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+        except Saved_Recipe.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def list(self, request):
         """
-        Handles GET requests for all recipes.
+        Handles GET requests for all saved recipes.
         
         """
         user = User.objects.get(pk=request.auth.user.id)
@@ -209,9 +221,7 @@ class Saved_Recipes(ViewSet):
 
         if request.method == "GET":
 
-            user = User.objects.get(pk=request.auth.user.id)
-
-            user_recipes = Saved_Recipe.objects.filter(user=user)
+            user_recipes = Saved_Recipe.objects.filter(user=request.auth.user)
 
             try:
                 favorite_recipes = user_recipes.filter(favorite=True)
