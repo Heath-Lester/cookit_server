@@ -306,32 +306,27 @@ class Saved_Recipes(ViewSet):
             except Exception as ex:
                 return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(methods=['patch'], detail=False)
+    @action(methods=['get'], detail=True)
     def favorite(self, request, pk=None):
-        """Handles PATCH requests to Favorite recipes"""
+        """Handles GET requests to favorite or unfavorite a recipe"""
 
-        if request.method == "PATCH":
+        if request.method == "GET":
 
             try:
 
                 recipe = Saved_Recipe.objects.get(pk=pk)
 
                 if recipe.favorite is False:
-
                     recipe.favorite = True
+                    recipe.save(force_update=True)
+
+                    return Response({'message': 'Recipe has been favorited!'}, status=status.HTTP_204_NO_CONTENT)
 
                 elif recipe.favorite is True:
-
                     recipe.favorite = False
+                    recipe.save(force_update=True)
 
-                recipe.ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
-                recipe.instructions = Instruction.objects.filter(saved_recipe=recipe.id)
-                recipe.equipment = Equipment.objects.filter(saved_recipe=recipe.id)
-
-                serializer = RecipeSerializer(
-                    recipe, many=False, context={'request': request})
-
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                    return Response({'message': 'Recipe has been unfavorited.'}, status=status.HTTP_204_NO_CONTENT)
 
             except Saved_Recipe.DoesNotExist as ex:
                 return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
