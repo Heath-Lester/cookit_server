@@ -210,9 +210,7 @@ class Meals(ViewSet):
                 meal.instructions = Instruction.objects.filter(saved_recipe=meal.saved_recipe)
                 meal.equipment = Equipment.objects.filter(saved_recipe=meal.saved_recipe)
 
-            serializer = DetailedMealSerializer(
-                meals, many=True, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = DetailedMealSerializer(
+            meals, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
        
-
-        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
