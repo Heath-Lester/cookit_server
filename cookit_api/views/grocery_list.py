@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.http import HttpResponseServerError
 from django.core.files.base import ContentFile
 from django.contrib.auth.models import User
-from cookit_api.models import Saved_Recipe, Ingredient, Instruction, Equipment, Meal
+from cookit_api.models import Saved_Recipe, Ingredient, Meal
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -20,7 +20,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class Grocery_List(ViewSet):
-    """Request handlers for saved, new, or edited recipes added to the meals-to-prep queue."""
+    """Request handlers ingredients from recipes listed in the meals queue."""
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def list(self, request):
@@ -52,3 +52,34 @@ class Grocery_List(ViewSet):
         serializer = IngredientSerializer(
             grocery_list, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+    @action(methods=['get'], detail=True)
+    def aquired(self, request, pk=None):
+        """Handles GET requests to aquired or unfavorite a recipe"""
+
+        if request.method == "GET":
+
+            try:
+                ingredient = Ingredient.objects.get(pk=pk)
+
+                if ingredient.aquired is False:
+                    ingredient.aquired = True
+                    ingredient.save(force_update=True)
+
+                    return Response({'message': 'ingredient has been aquired!'}, status=status.HTTP_204_NO_CONTENT)
+
+                elif ingredient.aquired is True:
+                    ingredient.aquired = False
+                    ingredient.save(force_update=True)
+
+                    return Response({'message': 'ingredient status has been reset.'}, status=status.HTTP_204_NO_CONTENT)
+
+            except Ingredient.DoesNotExist as ex:
+                return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+            except Exception as ex:
+                return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
