@@ -61,12 +61,12 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class Meals(ViewSet):
-    """Request handlers for saved, new, or edited recipes from the Spoonacular API"""
+    """Request handlers for saved, new, or edited recipes added to the meals-to-prep queue."""
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def create(self, request):
         """
-        Handles POST request for a new recipe.
+        Handles POST request for a meal to prepare.
         """
         user = User.objects.get(pk=request.auth.user.id)
         spoonacular_id = request.data["spoonacularId"]
@@ -151,116 +151,42 @@ class Meals(ViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-    # def update(self, request, pk=None):
-    #     """
-    #     Handles PUT requests for all saved recipes.
+    def destroy(self, request, pk=None):
+        """
+        Handles DELETE requests for all meals.
        
-    #     """
-    #     user = User.objects.get(pk=request.auth.user.id)
+        """
+        try:
+            meal = Meal.objects.get(pk=pk)
 
-    #     recipe = Saved_Recipe.objects.get(pk=pk)
+            if meal.saved_recipe is None:
 
-    #     old_ingredients = Ingredient.objects.filter(saved_recipe=pk)
-    #     old_instructions = Instruction.objects.filter(saved_recipe=pk)
-    #     old_equipment = Equipment.objects.filter(saved_recipe=pk)
+                ingredients = Ingredient.objects.filter(spoonacular_id=meal.spoonacular_id)
+                instructions = Instruction.objects.filter(spoonacular_id=meal.spoonacular_id)
+                equipment = Equipment.objects.filter(spoonacular_id=meal.spoonacular_id)
 
-    #     for ingredient in old_ingredients:
-    #         ingredient.delete()
-    #     for instruction in old_instructions:
-    #         instruction.delete()
-    #     for equipment in old_equipment:
-    #         equipment.delete()
+                for ingredient in ingredients:
+                    ingredient.delete()
+                for instruction in instructions:
+                    instruction.delete()
+                for item in equipment:
+                    item.delete()
 
-    #     recipe.spoonacular_id = request.data["spoonacularId"]
-    #     recipe.user = user
-    #     recipe.title = request.data["title"]
-    #     recipe.image = request.data["image"]
-    #     recipe.source_name = request.data["sourceName"]
-    #     recipe.source_url = request.data["sourceUrl"]
-    #     recipe.servings = request.data["servings"]
-    #     recipe.ready_in_minutes = request.data["readyInMinutes"]
-    #     recipe.summary = request.data["summary"]
-    #     recipe.favorite = request.data["favorite"]
-    #     recipe.edited = True
-    #     recipe.save()
+                meal.delete()
 
-    #     new_ingredients = request.data["ingredients"]
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
 
-    #     i=0
+            if meal.saved_recipe is not None:
 
-    #     for ingredient in new_ingredients:
-    #         ingredient = Ingredient()
-    #         ingredient.spoonacular_id = recipe.spoonacular_id
-    #         ingredient.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
-    #         ingredient.user = user
-    #         ingredient.spoon_ingredient_id = request.data["ingredients"][i]["spoonIngredientId"]
-    #         ingredient.amount = request.data["ingredients"][i]["amount"]
-    #         ingredient.unit = request.data["ingredients"][i]["unit"]
-    #         ingredient.name = request.data["ingredients"][i]["name"]
-    #         ingredient.aisle = request.data["ingredients"][i]["aisle"]
-    #         ingredient.aquired = False
-    #         ingredient.save()
-    #         i += 1
+                meal.delete()
 
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
+                
+        except Meal.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
 
-    #     new_instructions = request.data["instructions"]
-
-    #     i=0
-
-    #     for instruction in new_instructions:
-    #         instruction = Instruction()
-    #         instruction.spoonacular_id = recipe.spoonacular_id
-    #         instruction.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
-    #         instruction.user = user
-    #         instruction.step_number = request.data["instructions"][i]["number"]
-    #         instruction.instruction = request.data["instructions"][i]["step"]
-    #         instruction.save()
-    #         i += 1
-
-
-    #     new_eqiupment = request.data["equipment"]
-
-    #     i=0
-
-    #     for item in new_eqiupment:
-    #         item = Equipment()
-    #         item.spoonacular_id = recipe.spoonacular_id
-    #         item.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
-    #         item.user = user
-    #         item.name = request.data["equipment"][i]["name"]
-    #         item.save()
-    #         i += 1
-
-
-    #     return Response({}, status=status.HTTP_204_NO_CONTENT)
-
-    # def destroy(self, request, pk=None):
-    #     """
-    #     Handles DELETE requests for all saved recipes.
-       
-    #     """
-    #     try:
-    #         recipe = Saved_Recipe.objects.get(pk=pk)
-    #         ingredients = Ingredient.objects.filter(saved_recipe=recipe.id)
-    #         instructions = Instruction.objects.filter(saved_recipe=recipe.id)
-    #         equipment = Equipment.objects.filter(saved_recipe=recipe.id)
-
-    #         for ingredient in ingredients:
-    #             ingredient.delete()
-    #         for instruction in instructions:
-    #             instruction.delete()
-    #         for item in equipment:
-    #             item.delete()
-
-    #         recipe.delete()
-
-    #         return Response({}, status=status.HTTP_204_NO_CONTENT)
-
-    #     except Saved_Recipe.DoesNotExist as ex:
-    #         return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
-
-    #     except Exception as ex:
-    #         return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # def retrieve(self, request, pk=None):
     #     """
