@@ -210,38 +210,9 @@ class Meals(ViewSet):
                 meal.instructions = Instruction.objects.filter(saved_recipe=meal.saved_recipe)
                 meal.equipment = Equipment.objects.filter(saved_recipe=meal.saved_recipe)
 
-        serializer = DetailedMealSerializer(
-            meals, many=True, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-    @action(methods=['get'], detail=True)
-    def aquired(self, request, pk=None):
-        """Handles GET requests to favorite or unfavorite a recipe"""
-
-        if request.method == "GET":
-
-            try:
-
-                recipe = Saved_Recipe.objects.get(pk=pk)
-
-                if recipe.favorite is False:
-                    recipe.favorite = True
-                    recipe.save(force_update=True)
-
-                    return Response({'message': 'Recipe has been favorited!'}, status=status.HTTP_204_NO_CONTENT)
-
-                elif recipe.favorite is True:
-                    recipe.favorite = False
-                    recipe.save(force_update=True)
-
-                    return Response({'message': 'Recipe has been unfavorited.'}, status=status.HTTP_204_NO_CONTENT)
-
-            except Saved_Recipe.DoesNotExist as ex:
-                return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
-
-            except Exception as ex:
-                return HttpResponseServerError(ex, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+            serializer = DetailedMealSerializer(
+                meals, many=True, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+       
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
