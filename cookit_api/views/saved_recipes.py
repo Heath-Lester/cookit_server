@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.http import HttpResponseServerError
-from django.core.files.base import ContentFile
 from django.contrib.auth.models import User
 from cookit_api.models import Saved_Recipe, Ingredient, Instruction, Equipment
 
@@ -79,7 +78,7 @@ class Saved_Recipes(ViewSet):
             new_ingredient.spoonacular_id = new_recipe.spoonacular_id
             new_ingredient.saved_recipe = Saved_Recipe.objects.get(pk=new_recipe.id)
             new_ingredient.user = user
-            new_ingredient.spoon_ingredient_id = request.data["ingredients"][i]["spoonIngredientId"]
+            new_ingredient.spoon_ingredient_id = request.data["ingredients"][i]["id"]
             new_ingredient.amount = request.data["ingredients"][i]["amount"]
             new_ingredient.unit = request.data["ingredients"][i]["unit"]
             new_ingredient.name = request.data["ingredients"][i]["name"]

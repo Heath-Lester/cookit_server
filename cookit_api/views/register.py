@@ -3,7 +3,6 @@ import json
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.http import HttpResponse, HttpResponseNotAllowed
-from django.http import HttpResponseServerError
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
