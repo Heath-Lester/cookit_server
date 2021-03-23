@@ -92,7 +92,7 @@ class Meals(ViewSet):
                 ingredient = Ingredient()
                 ingredient.spoonacular_id = non_saved_recipe.spoonacular_id
                 ingredient.user = user
-                ingredient.spoon_ingredient_id = request.data["ingredients"][i]["spoonIngredientId"]
+                ingredient.spoon_ingredient_id = request.data["ingredients"][i]["id"]
                 ingredient.amount = request.data["ingredients"][i]["amount"]
                 ingredient.unit = request.data["ingredients"][i]["unit"]
                 ingredient.name = request.data["ingredients"][i]["name"]
