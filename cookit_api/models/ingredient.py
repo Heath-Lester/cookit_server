@@ -13,6 +13,7 @@ class Ingredient(models.Model):
     amount = models.IntegerField()
     unit = models.CharField(max_length=100, null=True)
     name = models.CharField(max_length=100, null=True)
+    original = models.CharField(max_length=100, null=True)
     aisle = models.CharField(max_length=100, null=True)
     aquired = models.BooleanField()
 

@@ -11,13 +11,22 @@ from django.contrib.auth.models import User
 from cookit_api.models import Saved_Recipe, Ingredient, Meal
 
 
+class ConciseRecipeSerializer(serializers.ModelSerializer):
+    """JSON serializer for Saved Recipes"""
+    class Meta:
+        model = Saved_Recipe
+        fields = ('id','spoonacular_id', 'title', 'image', 'source_name',
+                  'source_url', 'servings', 'ready_in_minutes', 'summary',
+                  'favorite', 'edited')
+
 class IngredientSerializer(serializers.ModelSerializer):
     """JSON serializer for Ingredients"""
+    saved_recipe = ConciseRecipeSerializer(many=False)
     class Meta:
         model = Ingredient
         fields = ('id', 'spoonacular_id', 'saved_recipe', 'spoon_ingredient_id', 'amount',
-                  'unit', 'name', 'aisle', 'aquired')
-
+                  'unit', 'name', 'original', 'aisle', 'aquired')
+    depth = 1
 
 class Grocery_List(ViewSet):
     """Request handlers ingredients from recipes listed in the meals queue."""
