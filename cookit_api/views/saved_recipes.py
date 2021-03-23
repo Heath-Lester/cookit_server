@@ -17,7 +17,7 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ('id', 'spoonacular_id', 'saved_recipe', 'spoon_ingredient_id', 'amount',
-                  'unit', 'name', 'aisle', 'aquired')
+                  'unit', 'name', 'original', 'aisle', 'aquired')
 
 class InstructionSerializer(serializers.ModelSerializer):
     """JSON serializer for Instructions"""
@@ -80,8 +80,9 @@ class Saved_Recipes(ViewSet):
             new_ingredient.user = user
             new_ingredient.spoon_ingredient_id = request.data["ingredients"][i]["id"]
             new_ingredient.amount = request.data["ingredients"][i]["amount"]
-            new_ingredient.unit = request.data["ingredients"][i]["unit"]
+            new_ingredient.unit = request.data["ingredients"][i]["measures"]["us"]["unitLong"]
             new_ingredient.name = request.data["ingredients"][i]["name"]
+            new_ingredient.original = request.data["ingredients"][i]["original"]
             new_ingredient.aisle = request.data["ingredients"][i]["aisle"]
             new_ingredient.aquired = False
             new_ingredient.save()
@@ -172,6 +173,7 @@ class Saved_Recipes(ViewSet):
             ingredient.amount = request.data["ingredients"][i]["amount"]
             ingredient.unit = request.data["ingredients"][i]["unit"]
             ingredient.name = request.data["ingredients"][i]["name"]
+            ingredient.original = request.data["ingredients"][i]["original"]
             ingredient.aisle = request.data["ingredients"][i]["aisle"]
             ingredient.aquired = False
             ingredient.save()
