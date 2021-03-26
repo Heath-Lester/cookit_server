@@ -242,3 +242,4 @@ class Meals(ViewSet):
             return Response({'message': 'Meal list has been reset!'}, status=status.HTTP_204_NO_CONTENT)
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        

@@ -10,7 +10,7 @@ class Ingredient(models.Model):
     saved_recipe = models.ForeignKey(Saved_Recipe, null=True, on_delete=models.CASCADE,)
     user = models.ForeignKey(User, on_delete=models.CASCADE,)
     spoon_ingredient_id = models.IntegerField(null=True)
-    amount = models.IntegerField()
+    amount = models.FloatField()
     unit = models.CharField(max_length=100, null=True)
     name = models.CharField(max_length=100, null=True)
     original = models.CharField(max_length=100, null=True)
