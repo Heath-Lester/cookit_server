@@ -410,7 +410,7 @@ class Saved_Recipes(ViewSet):
                 new_item = Equipment()
                 new_item.saved_recipe = Saved_Recipe.objects.get(pk=new_recipe.id)
                 new_item.user = user
-                new_item.name = request.data["equipment"][i]["title"]
+                new_item.name = request.data["equipment"][i]["name"]
                 new_item.save()
                 i += 1
 
