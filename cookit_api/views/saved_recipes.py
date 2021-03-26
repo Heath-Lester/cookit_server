@@ -147,16 +147,11 @@ class Saved_Recipes(ViewSet):
         for equipment in old_equipment:
             equipment.delete()
 
-        recipe.spoonacular_id = request.data["spoonacularId"]
-        recipe.user = user
         recipe.title = request.data["title"]
         recipe.image = request.data["image"]
-        recipe.source_name = request.data["sourceName"]
-        recipe.source_url = request.data["sourceUrl"]
         recipe.servings = request.data["servings"]
         recipe.ready_in_minutes = request.data["readyInMinutes"]
         recipe.summary = request.data["summary"]
-        recipe.favorite = request.data["favorite"]
         recipe.edited = True
         recipe.save()
 
@@ -165,18 +160,28 @@ class Saved_Recipes(ViewSet):
         i=0
 
         for ingredient in new_ingredients:
-            ingredient = Ingredient()
-            ingredient.spoonacular_id = recipe.spoonacular_id
-            ingredient.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
-            ingredient.user = user
-            ingredient.spoon_ingredient_id = request.data["ingredients"][i]["spoonIngredientId"]
-            ingredient.amount = request.data["ingredients"][i]["amount"]
-            ingredient.unit = request.data["ingredients"][i]["unit"]
-            ingredient.name = request.data["ingredients"][i]["name"]
-            ingredient.original = request.data["ingredients"][i]["original"]
-            ingredient.aisle = request.data["ingredients"][i]["aisle"]
-            ingredient.aquired = False
-            ingredient.save()
+            new_ingredient = Ingredient()
+            new_ingredient.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
+            new_ingredient.user = user
+            new_ingredient.amount = float(request.data["ingredients"][i]["amount"])
+            new_ingredient.unit = request.data["ingredients"][i]["unit"]
+            new_ingredient.name = request.data["ingredients"][i]["title"]
+
+            if new_ingredient.unit == "None" and new_ingredient.amount > 1.0:
+                new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.name + "s"
+
+            elif new_ingredient.unit == "None" and new_ingredient.amount <= 1.0:
+                new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.name
+
+            elif new_ingredient.amount > 1.0:
+                new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.unit + "s of " + new_ingredient.name
+
+            elif new_ingredient.amount <= 1.0:
+                new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.unit + " of " + new_ingredient.name
+
+            new_ingredient.aisle = request.data["ingredients"][i]["aisle"]
+            new_ingredient.aquired = False
+            new_ingredient.save()
             i += 1
 
 
@@ -185,13 +190,12 @@ class Saved_Recipes(ViewSet):
         i=0
 
         for instruction in new_instructions:
-            instruction = Instruction()
-            instruction.spoonacular_id = recipe.spoonacular_id
-            instruction.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
-            instruction.user = user
-            instruction.step_number = request.data["instructions"][i]["number"]
-            instruction.instruction = request.data["instructions"][i]["step"]
-            instruction.save()
+            new_instruction = Instruction()
+            new_instruction.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
+            new_instruction.user = user
+            new_instruction.step_number = i + 1
+            new_instruction.instruction = request.data["instructions"][i]["instruction"]
+            new_instruction.save()
             i += 1
 
 
@@ -200,12 +204,11 @@ class Saved_Recipes(ViewSet):
         i=0
 
         for item in new_eqiupment:
-            item = Equipment()
-            item.spoonacular_id = recipe.spoonacular_id
-            item.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
-            item.user = user
-            item.name = request.data["equipment"][i]["name"]
-            item.save()
+            new_item = Equipment()
+            new_item.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
+            new_item.user = user
+            new_item.name = request.data["equipment"][i]["name"]
+            new_item.save()
             i += 1
 
 
@@ -340,7 +343,7 @@ class Saved_Recipes(ViewSet):
 
     @action(methods=['post'], detail=False)
     def new(self, request):
-        """Handles POST requests for user made recipes"""
+        """Handles POST requests for user-made recipes"""
 
         if request.method == "POST":
 

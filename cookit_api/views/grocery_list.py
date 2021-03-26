@@ -92,3 +92,5 @@ class Grocery_List(ViewSet):
         
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    
