@@ -337,3 +337,90 @@ class Saved_Recipes(ViewSet):
         
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(methods=['post'], detail=False)
+    def new(self, request):
+        """Handles POST requests for user made recipes"""
+
+        if request.method == "POST":
+
+            user = User.objects.get(pk=request.auth.user.id)
+
+            new_recipe = Saved_Recipe()
+            new_recipe.user = user
+            new_recipe.title = request.data["title"]
+            new_recipe.image = request.data["image"]
+            new_recipe.source_name = user.first_name + " " + user.last_name
+            new_recipe.servings = int(request.data["servings"])
+            new_recipe.ready_in_minutes = int(request.data["readyInMinutes"])
+            new_recipe.summary = request.data["summary"]
+            new_recipe.favorite = False
+            new_recipe.edited = False
+            new_recipe.save()
+
+            new_ingredients = request.data["ingredients"]
+
+            i=0
+
+            for new_ingredient in new_ingredients:
+                new_ingredient = Ingredient()
+                new_ingredient.saved_recipe = Saved_Recipe.objects.get(pk=new_recipe.id)
+                new_ingredient.user = user
+                new_ingredient.amount = float(request.data["ingredients"][i]["amount"])
+                new_ingredient.unit = request.data["ingredients"][i]["unit"]
+                new_ingredient.name = request.data["ingredients"][i]["title"]
+
+                if new_ingredient.unit == "None" and new_ingredient.amount > 1.0:
+                    new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.name + "s"
+
+                elif new_ingredient.unit == "None" and new_ingredient.amount <= 1.0:
+                    new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.name
+
+                elif new_ingredient.amount > 1.0:
+                    new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.unit + "s of " + new_ingredient.name
+
+                elif new_ingredient.amount <= 1.0:
+                    new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.unit + " of " + new_ingredient.name
+
+                new_ingredient.aisle = request.data["ingredients"][i]["aisle"]
+                new_ingredient.aquired = False
+                new_ingredient.save()
+                i += 1
+
+
+            new_instructions = request.data["instructions"]
+
+            i=0
+
+            for new_instruction in new_instructions:
+                new_instruction = Instruction()
+                new_instruction.saved_recipe = Saved_Recipe.objects.get(pk=new_recipe.id)
+                new_instruction.user = user
+                new_instruction.step_number = i + 1
+                new_instruction.instruction = request.data["instructions"][i]["instruction"]
+                new_instruction.save()
+                i += 1
+
+
+            new_eqiupment = request.data["equipment"]
+
+            i=0
+
+            for new_item in new_eqiupment:
+                new_item = Equipment()
+                new_item.saved_recipe = Saved_Recipe.objects.get(pk=new_recipe.id)
+                new_item.user = user
+                new_item.name = request.data["equipment"][i]["title"]
+                new_item.save()
+                i += 1
+
+            new_recipe.ingredients = Ingredient.objects.filter(saved_recipe=new_recipe.id)
+            new_recipe.instructions = Instruction.objects.filter(saved_recipe=new_recipe.id)
+            new_recipe.equipment = Equipment.objects.filter(saved_recipe=new_recipe.id)
+
+            serializer = RecipeSerializer(
+                new_recipe, context={'request': request})
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
