@@ -140,6 +140,7 @@ class Saved_Recipes(ViewSet):
         old_instructions = Instruction.objects.filter(saved_recipe=pk)
         old_equipment = Equipment.objects.filter(saved_recipe=pk)
 
+        # Deletes all old Ingredients, Instructions, and Equipment
         for ingredient in old_ingredients:
             ingredient.delete()
         for instruction in old_instructions:
@@ -164,20 +165,159 @@ class Saved_Recipes(ViewSet):
             new_ingredient.saved_recipe = Saved_Recipe.objects.get(pk=recipe.id)
             new_ingredient.user = user
             new_ingredient.amount = float(request.data["ingredients"][i]["amount"])
-            new_ingredient.unit = request.data["ingredients"][i]["unit"]
             new_ingredient.name = request.data["ingredients"][i]["title"]
 
-            if new_ingredient.unit == "None" and new_ingredient.amount > 1.0:
-                new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.name + "s"
+            # Deconstructs the float 'amount' to create the 'original' ingredient description
+            float_to_integer = str(new_ingredient.amount).split('.')
+            whole_number = int(float_to_integer[0])
+            decimal = int(float_to_integer[1])
+            fraction = ""
 
-            elif new_ingredient.unit == "None" and new_ingredient.amount <= 1.0:
-                new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.name
+            # Finds if spoonacular's tablespoon default is present
+            string_divider = ""
+            unit = request.data["ingredients"][i]["unit"]
+            if unit == 'Tbsps' or unit == 'Tbsp':
+                new_ingredient.unit = 'tablespoon'
 
-            elif new_ingredient.amount > 1.0:
-                new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.unit + "s of " + new_ingredient.name
+            # Converts plural units to singular units
+            elif str(unit).endswith('ves'):
+                unit_list = list(unit)
+                unit_list.pop(-1)
+                unit_list.pop(-1)
+                unit_list.pop(-1)
+                unit_list.append('f')
+                unit_tuple = tuple(unit_list)
+                singular_unit = string_divider.join(unit_tuple)
+                new_ingredient.unit = str(singular_unit)
 
-            elif new_ingredient.amount <= 1.0:
-                new_ingredient.original = str(new_ingredient.amount) + " " + new_ingredient.unit + " of " + new_ingredient.name
+            elif str(unit).endswith(tuple(['ches', 'ses', 'shes', 'sses', 'xes', 'zes', ])):
+                unit_list = list(unit)
+                unit_list.pop(-1)
+                unit_list.pop(-1)
+                unit_tuple = tuple(unit_list)
+                singular_unit = string_divider.join(unit_tuple)
+                new_ingredient.unit = str(singular_unit)
+
+            elif str(unit).endswith(tuple(['boes', 'coes', 'does', 'foes', 'goes', 'hoes', 'joes', 'koes', 'loes', 'moes', 'noes', 'poes', 'qoes', 'roes', 'soes', 'toes', 'voes', 'woes', 'xoes', 'zoes', ])):
+                unit_list = list(unit)
+                unit_list.pop(-1)
+                unit_list.pop(-1)
+                unit_tuple = tuple(unit_list)
+                singular_unit = string_divider.join(unit_tuple)
+                new_ingredient.unit = str(singular_unit)
+
+            elif str(unit).endswith('ies'):
+                unit_list = list(unit)
+                unit_list.pop(-1)
+                unit_list.pop(-1)
+                unit_list.pop(-1)
+                unit_list.append('y')
+                unit_tuple = tuple(unit_list)
+                singular_unit = string_divider.join(unit_tuple)
+                new_ingredient.unit = str(singular_unit)
+                
+            elif str(unit).endswith('s'):
+                unit_list = list(unit)
+                unit_list.pop(-1)
+                unit_tuple = tuple(unit_list)
+                singular_unit = string_divider.join(unit_tuple)
+                new_ingredient.unit = str(singular_unit)
+
+            else:
+                new_ingredient.unit = request.data["ingredients"][i]["unit"]
+
+            # Converts the decimal into a fraction
+            if decimal != 0:
+                if decimal == 25:
+                    fraction = "1/4"
+                elif str(decimal).startswith('3') and str(decimal).endswith('3'):
+                    fraction = "1/3"
+                elif decimal == 5:
+                    fraction = "1/2"
+                elif str(decimal).startswith('6') and str(decimal).endswith('6'):
+                    fraction = "2/3"
+                elif decimal == 75:
+                    fraction = "3/4"
+            
+            # Sentece builder for singular units
+            measurements = set(("teaspoon", "tablespoon", "ounce", "cup", "pint", "quart", "gallon", "pound", "gram", "milligram", "inch", "centimeter", "slice", "serving", "piece", "stick", "pinch"))
+            if whole_number <= 1:
+
+                if decimal == 0:
+                    if new_ingredient.unit == '':
+                        new_ingredient.original = str(whole_number) + " " + new_ingredient.name
+
+                    elif new_ingredient.unit not in measurements:
+                            new_ingredient.original = str(whole_number) + " " + new_ingredient.unit + " " + new_ingredient.name
+
+                    else:
+                        new_ingredient.original = str(whole_number) + " " + new_ingredient.unit + " of " + new_ingredient.name
+
+                else:
+                    if new_ingredient.unit == '':
+                        new_ingredient.original = fraction + " " + new_ingredient.name
+
+                    elif new_ingredient.unit not in measurements:
+                            new_ingredient.original = str(whole_number) + " " + new_ingredient.unit + " " + new_ingredient.name
+                    
+                    else:
+                        new_ingredient.original = fraction + " " + new_ingredient.unit + " of " + new_ingredient.name
+
+            # Sentece builder for plural units 
+            elif whole_number > 1:
+
+                if decimal == 0:
+
+                    if new_ingredient.unit == '':
+                        new_ingredient.original = str(whole_number) + " " + new_ingredient.name
+
+                    elif new_ingredient.unit not in measurements:
+                            new_ingredient.original = str(whole_number) + " " + new_ingredient.unit + " " + new_ingredient.name
+
+                    else:
+                        new_ingredient.original = str(whole_number) + " " + new_ingredient.unit + "s of " + new_ingredient.name
+
+                elif decimal > 0:
+
+                    if new_ingredient.unit == '':
+                        new_ingredient.original = str(whole_number) + " " + fraction + " " + new_ingredient.name
+
+                    elif new_ingredient.unit not in measurements:
+                        new_ingredient.original = str(whole_number) + " " + fraction + " " + new_ingredient.unit + " " + new_ingredient.name
+
+                    elif new_ingredient.unit.endswith(tuple(['ch', 's', 'sh', 'ss', 'x', 'z', ])):
+                        new_ingredient.original = str(whole_number) + " " + fraction + " " + new_ingredient.unit + "es of " + new_ingredient.name
+                    
+                    elif new_ingredient.unit.endswith('f'):
+                        unit_list = list(new_ingredient)
+                        unit_list.pop(-1)
+                        unit_tuple = tuple(unit_list)
+                        unit_wo_affix = string_divider.join(unit_tuple)
+                        unit_string = str(unit_wo_affix)
+                        new_ingredient.original = str(whole_number) + " " + fraction + " " + unit_string + "ves of " + new_ingredient.name
+
+                    elif new_ingredient.unit.endswith('fe'):
+                        unit_list = list(new_ingredient)
+                        unit_list.pop(-1)
+                        unit_list.pop(-1)
+                        unit_tuple = tuple(unit_list)
+                        unit_wo_affix = string_divider.join(unit_tuple)
+                        unit_string = str(unit_wo_affix)
+                        new_ingredient.original = str(whole_number) + " " + fraction + " " + unit_string + "ves of " + new_ingredient.name
+
+                    elif new_ingredient.unit.endswith(tuple(['bo', 'co', 'do', 'fo', 'go', 'ho', 'jo', 'ko', 'lo', 'mo', 'no', 'po', 'qo', 'ro', 'so', 'to', 'vo', 'wo', 'xo', 'zo', ])):
+                        new_ingredient.original = str(whole_number) + " " + fraction + " " + new_ingredient.unit + "es of " + new_ingredient.name
+
+                    elif new_ingredient.unit.endswith(tuple(['by', 'cy', 'dy', 'fy', 'gy', 'hy', 'jy', 'ky', 'ly', 'my', 'ny', 'py', 'qy', 'ry', 'sy', 'ty', 'vy', 'wy', 'xy', 'zy', ])):
+                        unit_list = list(new_ingredient)
+                        unit_list.pop(-1)
+                        unit_tuple = tuple(unit_list)
+                        unit_wo_affix = string_divider.join(unit_tuple)
+                        unit_string = str(unit_wo_affix)
+                        new_ingredient.original = str(whole_number) + " " + fraction + " " + unit_string + "ies of " + new_ingredient.name
+                    
+                    else:
+                        new_ingredient.original = str(whole_number) + " " + fraction + " " + new_ingredient.unit + "s of " + new_ingredient.name
 
             new_ingredient.aisle = request.data["ingredients"][i]["aisle"]
             new_ingredient.aquired = False
