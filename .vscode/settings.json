@@ -7,5 +7,6 @@
             "database": "db.sqlite3"
         }
     ],
-    "python.pythonPath": "/home/heath/.local/share/virtualenvs/cookit_server-sANno-3L/bin/python"
+    "python.pythonPath": "/home/heath/.local/share/virtualenvs/cookit_server-sANno-3L/bin/python",
+    "python.linting.pylintEnabled": true
 }
