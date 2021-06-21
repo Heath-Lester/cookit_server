@@ -135,3 +135,4 @@ dmypy.json
 static.*
 
 *.ini
+*.env
