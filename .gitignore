@@ -133,3 +133,5 @@ dmypy.json
 !.elasticbeanstalk/*.global.yml
 
 static.*
+
+*.ini
