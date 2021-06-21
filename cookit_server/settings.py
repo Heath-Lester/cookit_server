@@ -27,7 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     "django-env.eba-ssefm7mw.us-east-1.elasticbeanstalk.com",
-    "cookit-server-dev2.us-east-1.elasticbeanstalk.com"
+    "cookit-server-dev2.us-east-1.elasticbeanstalk.com",
+    "172.31.26.125"
     ]
 
 
