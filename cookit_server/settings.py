@@ -74,7 +74,8 @@ CORS_ORIGIN_WHITELIST = (
     'https://cookit-react.herokuapp.com',
     '172.31.88.105',
     '172.31.30.94',
-    "http://127.0.0.1:8000/"
+    "http://127.0.0.1:8000/",
+    "http://1.1"
 )
 
 MIDDLEWARE = [
